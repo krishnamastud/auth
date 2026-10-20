@@ -2,7 +2,7 @@ import { verifyToken } from "../utils/auth.utils.js";
 
 export default function authenticate(req, res, next) {
   try {
-    const x = req.headers.authorization?.split(" ")[1];
+    const accessToken = req.headers.authorization?.split(" ")[1];
 
     if (!accessToken) {
       return res.status(401).json({ message: "Access token not found" });

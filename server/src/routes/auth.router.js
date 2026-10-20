@@ -1,5 +1,8 @@
 import express from "express";
-import { registerValidation } from "../validation/auth.validation.js";
+import {
+  loginValidation,
+  registerValidation,
+} from "../validation/auth.validation.js";
 import authenticate from "./../middleware/auth.middleware.js";
 import {
   getMeController,
@@ -15,13 +18,14 @@ const router = express.Router();
 
 router.post("/register", registerValidation, registerUserController);
 
-router.post("/login", loginUserController);
+router.post("/login", loginValidation, loginUserController);
 
 router.get("/get-me", authenticate, getMeController);
 
 router.get("/refresh-token", refreshTokenController);
 
-router.get( "/google",
+router.get(
+  "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
@@ -42,21 +46,13 @@ router.get(
     const isUserExists = await userModel.findOne({ email });
 
     if (isUserExists) {
-      const accessToken = generateToken(isUserExists, "access");
       const refreshToken = generateToken(isUserExists, "refresh");
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
       });
       await userModel.findByIdAndUpdate(isUserExists._id, { refreshToken });
 
-      return res.json({
-        message: "Google authentication successful",
-        data: {
-          accessToken,
-          user: isUserExists,
-        },
-      });
-      return;
+      return res.redirect("http://localhost:5173/main/dashboard");
     }
 
     const newUser = await userModel.create({
@@ -65,23 +61,16 @@ router.get(
       googleId: user.id,
     });
 
-    const accessToken = generateToken(newUser, "access");
     const refreshToken = generateToken(newUser, "refresh");
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
     });
 
     await userModel.findByIdAndUpdate(newUser._id, { refreshToken });
 
-    res.json({
-      message: "Google authentication successful",
-      data: {
-        accessToken,
-        user: newUser,
-      },
-    });
-
-  }
+    return res.redirect("http://localhost:5173/main/dashboard");
+  },
 );
 
 export default router;
